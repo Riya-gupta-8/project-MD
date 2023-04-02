@@ -16,7 +16,7 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT , 480)  #Considering the height as 480
 
 #reading the 2nd frame
 _ , start_frame = cap.read() 
-#start_frame = cv2.resize(start_frame , (500 , 480))   #Resize the first frame 
+start_frame = cv2.resize(start_frame , (500 , 480))   #Resize the first frame 
 start_frame = cv2.cvtColor(start_frame , cv2.COLOR_BGR2GRAY)  #Change the color image to gray scale image
 #cv2.imshow("cam" , start_frame)
 #cv2.waitKey(5000)
@@ -43,7 +43,7 @@ def MotionDetection():
     while True:
         success , frame = cap.read()   #Reads the frame
         if success:
-            #frame = cv2.resize(frame , (500 ,480)) # resize the frame to width 500
+            frame = cv2.resize(frame , (500 ,480)) # resize the frame to width 500
             gray_frame = cv2.cvtColor(frame , cv2.COLOR_BGR2GRAY)   # change color to gray scale
             #cv2.imshow("cam" , gray_frame)
             #cv2.waitKey(5000)
