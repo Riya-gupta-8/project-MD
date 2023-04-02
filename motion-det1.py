@@ -1,0 +1,140 @@
+import threading    
+import cv2   # pip install opencv-python
+import imutils  #pip install imutils
+import time 
+#importing mail module
+from send_mail import prepare_and_send_email
+#start the webcam
+url= "http://192.168.43.107:4747/video"
+cap = cv2.VideoCapture(url)
+#skipping the first frame
+_ , _ = cap.read()
+
+cap.set(cv2.CAP_PROP_FRAME_WIDTH , 640)   #Considering the width as 640
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT , 480)  #Considering the height as 480
+
+#reading the 2nd frame
+_ , start_frame = cap.read() 
+start_frame = imutils.resize(start_frame , width = 500)   #Resize the first frame 
+start_frame = cv2.cvtColor(start_frame , cv2.COLOR_BGR2GRAY)  #Change the color image to gray scale image
+#cv2.imshow("cam" , start_frame)
+#cv2.waitKey(5000)
+start_frame = cv2.GaussianBlur(start_frame , (5,5) , 0)  #Smoothen the image ie;blur
+#cv2.imshow("cam" , start_frame)
+#cv2.waitKey(5000)
+
+
+
+
+next_send_mail = True
+count_frame = 0 # to keep track of frames in which motion is observed
+
+
+def Alert(frame):
+    global next_send_mail
+    next_send_mail = False  
+    prepare_and_send_email('riya.gupta@giindia.com',
+                            'riyagupta0823@gmail.com',
+                            'Alert Alert Alert',
+                            'Hi Riya,\nSomeone is detected at the premises.\n\n\n\nRegards,\nRiya',
+                            frame)
+    time.sleep(120)
+    next_send_mail = True
+    
+
+def MotionDetection():
+    global is_email_allowed , count_frame ,start_frame , next_send_mail 
+    while True:
+        success , frame = cap.read()   #Reads the frame
+        if success:
+            frame = imutils.resize(frame , width = 500)  # resize the frame to width 500
+            gray_frame = cv2.cvtColor(frame , cv2.COLOR_BGR2GRAY)   # change color to gray scale
+            #cv2.imshow("cam" , gray_frame)
+            #cv2.waitKey(5000)
+            gray_frame = cv2.GaussianBlur(gray_frame , (5,5) , 0) # it will smoothen the image 
+
+            difference = cv2.absdiff(gray_frame , start_frame)   # it will find the absolute difference two gray scaled images
+            '''
+            difference depicts difference in the pixels of two images'''
+            #print(difference)
+            #print(type(difference))
+            threshold = cv2.threshold(difference , 50 , 255 ,cv2.THRESH_BINARY)[1]            
+            '''
+            Applied general thresholding
+            para1 : image,
+            para2 : threshold value it lies [0,255],
+            para3 : max value of pixel,
+            para4 : type of  thresholding - simple 
+            
+            return:
+            first-op : the threshold value,
+            second-op : the threshold image'''
+            #print(type(threshold))
+            #print(threshold)
+            frame_copy = frame.copy()
+            cnts , res = cv2.findContours(threshold.copy(),cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
+            #print(cnts)
+            flag = False
+            for contour in cnts:
+                if cv2.contourArea(contour) >= 500:
+                    count_frame += 1
+                    if count_frame >= 5 and next_send_mail is True:
+                        count_frame = 0
+                        thread_1 = threading.Thread(target=Alert, args=(frame_copy,))
+                        thread_1.start()
+
+                # if cv2.contourArea(contour) <500:
+                #     continue
+                # else:
+                #     if count_frame < 5:
+                #         count_frame += 1
+                #     elif count_frame == 5:
+                #         next_send_mail = True
+                #         count_frame = 0
+                #         t1 = threading.Thread(target = Alert , args = (frame_copy,))
+                #         t1.start()
+                #         #t1.join()
+                        
+                #         #is_email_allowed =False
+                
+                    (x,y,w,h) = cv2.boundingRect(contour)
+                    cv2.rectangle(frame , (x,y) ,((x+w) , (y+h)) , (0,255,0) , 3)
+                    cv2.putText(frame, "STATUS: {}".format('MOTION DETECTED'), (10, 60), cv2.FONT_HERSHEY_SIMPLEX,
+                        1, (217, 10, 10), 2)
+
+
+            '''if threshold.sum() > 300:    #threshold.sum() is the sum of the pixels 
+                if count_frame <5:
+                    count_frame += 1
+                elif count_frame == 5:
+                    is_email_allowed = True
+                    threading.Thread(target = alert , 
+                                     args=(frame,)).start()
+                    count_frame = 0
+                    is_email_allowed= False'''
+            cv2.imshow("stream" , frame)  
+            start_frame = gray_frame  
+            #key_pressed = cv2.waitKey(0)
+            #key = cv2.waitKey(0)
+            if cv2.waitKey(1) and 0xFF == ord('q'):
+                break
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+
+MotionDetection()
+'''
+if threshold val =100, 50
+and contour area <3000
+not good result'''
+
+
+'''
+if threshold val = 50
+and contour area <2000
+result- bit satisfying'''
+
+
+'''
+'''
