@@ -5,7 +5,7 @@ import time
 #importing mail module
 from send_mail import prepare_and_send_email
 
-src = "http://192.168.43.109:4747/video"
+src = "http://192.168.29.53:4747/video"
 #start the webcam
 cap = cv2.VideoCapture(src)
 #skipping the first frame
