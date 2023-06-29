@@ -8,6 +8,7 @@ from send_mail import prepare_and_send_email
 url= "http://192.168.43.107:4747/video"
 cap = cv2.VideoCapture(url)
 #skipping the first frame
+# No need alway sto do so
 _ , _ = cap.read()
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH , 640)   #Considering the width as 640
